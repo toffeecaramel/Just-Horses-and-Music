@@ -3,10 +3,12 @@ package;
 import backend.*;
 import flixel.*;
 import flixel.FlxState;
+import obj.DialogueBox;
 
 class PlayState extends FlxState
 {
 	var mgr:CueManager;
+	var dialogueBox:DialogueBox;
 	override public function create()
 	{
 		super.create();
@@ -25,6 +27,14 @@ class PlayState extends FlxState
 		mgr.loadChart(ChartTest.build());
 
 		Conductor.onBeatHit.add(onBeat);
+		dialogueBox = new DialogueBox();
+		add(dialogueBox);
+
+		dialogueBox.startDialogue([
+			{speaker: "Coach", text: "Alright, watch this!"},
+			{speaker: "Coach", text: "Tap right when you hear the cue."},
+			{text: "shut up bitch"}
+		]);
 	}
 
 	override public function update(elapsed:Float)
@@ -36,8 +46,12 @@ class PlayState extends FlxState
 		if (FlxG.keys.justPressed.Z) mgr.press("A");
 		if (FlxG.keys.justReleased.Z) mgr.release("A");
 
+		if (FlxG.keys.justPressed.Z && dialogueBox.visible)
+			dialogueBox.next();
+
 		super.update(elapsed);
 	}
+
 	function onBeat(bitch:Int)
 	{
 		trace(bitch);

@@ -40,7 +40,7 @@ class Conductor
 	static var lastMeasure:Int = -1;
 
     // How strongly we correct toward the real audio position each frame when the difference is small
-	static inline var SYNC_STRENGTH:Float = 0.20;
+	static inline var SYNC_STRENGTH:Float = 0.10;
 
 	// If we're off from the real audio position by more than this many ms, snap instantly
 	static inline var SNAP_THRESHOLD:Float = 40;
