@@ -4,16 +4,37 @@ import backend.*;
 import flixel.*;
 import flixel.FlxState;
 import obj.DialogueBox;
+import openfl.utils.Assets;
+#if sys
+import sys.FileSystem;
+import sys.io.File;
+#end
+import haxe.Json;
+import StringTools;
 
 class PlayState extends FlxState
 {
+	public static inline var DEFAULT_SONG:String = "tutorial_race";
+
+	var songId:String;
+	var songPath:String;
+	var chartPath:String;
 	var mgr:CueManager;
 	var dialogueBox:DialogueBox;
+
+	public function new(?songId:String)
+	{
+		super();
+		this.songId = songId == null ? DEFAULT_SONG : songId;
+		this.songPath = 'assets/music/${this.songId}.ogg';
+		this.chartPath = 'assets/music/${this.songId}.chart.json';
+	}
+
 	override public function create()
 	{
 		super.create();
 		Conductor.reset(119);
-		FlxG.sound.playMusic(AssetPaths.tutorial_race__ogg);
+		playSong();
 
 		mgr = new CueManager();
 		mgr.onHit.add((cue, judgment) -> trace('${cue.action} at ${cue.time} with $judgment'));
@@ -24,7 +45,7 @@ class PlayState extends FlxState
 			trace(cue);
 		});
 
-		mgr.loadChart(ChartTest.build());
+		mgr.loadChart(ChartLoader.load(chartPath));
 
 		Conductor.onBeatHit.add(onBeat);
 		dialogueBox = new DialogueBox();
@@ -35,6 +56,14 @@ class PlayState extends FlxState
 			{speaker: "Coach", text: "Tap right when you hear the cue."},
 			{text: "shut up bitch"}
 		]);
+	}
+
+	function playSong():Void
+	{
+		if (Assets.exists(songPath))
+			FlxG.sound.playMusic(songPath);
+		else
+			trace('Missing song: $songPath');
 	}
 
 	override public function update(elapsed:Float)
@@ -57,6 +86,56 @@ class PlayState extends FlxState
 		trace(bitch);
 
 		FlxG.sound.play('assets/sounds/tick.ogg');
+	}
+}
+
+typedef ChartFile = {
+	@:optional var meta:ChartMeta;
+	var notes:Array<ChartNote>;
+}
+
+typedef ChartMeta = {
+	@:optional var song:String;
+	@:optional var bpm:Float;
+	@:optional var offset:Float;
+	@:optional var author:String;
+}
+
+typedef ChartNote = {
+	var time:Float;
+}
+
+class ChartLoader
+{
+	public static function load(path:String):Array<Cue>
+	{
+		var raw:String = read(path);
+		if (raw == null || StringTools.trim(raw) == "")
+			return ChartTest.build();
+
+		var chart:ChartFile = Json.parse(raw);
+		if (chart == null || chart.notes == null)
+			return [];
+
+		if (chart.meta != null && chart.meta.bpm != null)
+			Conductor.reset(chart.meta.bpm, chart.meta.offset == null ? 0 : chart.meta.offset);
+
+		var cues:Array<Cue> = [];
+		for (note in chart.notes)
+			cues.push(new Cue(note.time, "A"));
+
+		return cues;
+	}
+
+	static function read(path:String):String
+	{
+		#if sys
+		if (FileSystem.exists(path))
+			return File.getContent(path);
+		#end
+		if (Assets.exists(path))
+			return Assets.getText(path);
+		return null;
 	}
 }
 

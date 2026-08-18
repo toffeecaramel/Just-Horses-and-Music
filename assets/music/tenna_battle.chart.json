@@ -1,0 +1,14 @@
+{
+	"meta": {
+		"song": "tenna_battle",
+		"bpm": 119,
+		"offset": 0,
+		"author": "Toby Fox"
+	},
+	"notes": [
+		{ "time": 0 },
+		{ "time": 1000 },
+		{ "time": 2000 },
+		{ "time": 3000 }
+	]
+}
